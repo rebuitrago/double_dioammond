@@ -14,7 +14,7 @@ coverage_report) take plain DataFrames and do no I/O, so they can be tested
 offline. Only score_run() touches Supabase.
 
 Usage:
-    export SUPABASE_URL=...  SUPABASE_SERVICE_KEY=...
+    export SUPABASE_URL=...  SUPABASE_SECRET_KEY=...
     python -m ddd.score_run --label "EM 2010-2022 pooled" \
         --normalization pooled --vintage "WDI 2025-03"
 """
@@ -84,7 +84,7 @@ def coverage_report(frame: pd.DataFrame,
 def _client():
     from supabase import create_client
     return create_client(os.environ["SUPABASE_URL"],
-                         os.environ["SUPABASE_SERVICE_KEY"])
+                         os.environ["SUPABASE_SECRET_KEY"])
 
 
 def _read_all(client, table: str, select: str = "*",
@@ -106,6 +106,7 @@ def _read_all(client, table: str, select: str = "*",
 
 def score_run(label: str,
               normalization: str = "within_year",
+              scoring_method: str | None = None,
               countries: list[str] | None = None,
               indicator_ids: list[int] | None = None,
               year_from: int | None = None,
@@ -138,7 +139,8 @@ def score_run(label: str,
         raise RuntimeError("No observations matched the filters; nothing to score.")
 
     frame = build_scoring_frame(observations, indicators, determinants, factors)
-    scores = compute_scores(frame, normalization=normalization)
+    scores = compute_scores(frame, normalization=normalization,
+                            method_override=scoring_method)
     scores = attach_determinant_ids(scores, frame)
     cov = coverage_report(frame, scores)
 
@@ -193,6 +195,10 @@ if __name__ == "__main__":
     p.add_argument("--label", required=True)
     p.add_argument("--normalization", choices=["within_year", "pooled"],
                    default="within_year")
+    p.add_argument("--scoring-method",
+                   choices=["ratio_max", "minmax", "percentile"],
+                   help="override per-indicator method for the whole run "
+                        "(percentile = fair ranks, recommended for many countries)")
     p.add_argument("--countries", nargs="*", help="ISO3 codes (default: all)")
     p.add_argument("--year-from", type=int)
     p.add_argument("--year-to", type=int)
@@ -201,6 +207,7 @@ if __name__ == "__main__":
                    help="compute + report but do not write to Supabase")
     a = p.parse_args()
     _print_summary(score_run(
-        label=a.label, normalization=a.normalization, countries=a.countries,
+        label=a.label, normalization=a.normalization,
+        scoring_method=a.scoring_method, countries=a.countries,
         year_from=a.year_from, year_to=a.year_to, vintage=a.vintage,
         dry_run=a.dry_run))

@@ -54,6 +54,14 @@ def normalize_indicator(values: dict[str, float], polarity: str = "+",
             scored = {c: 100 - s for c, s in scored.items()}
         return scored
 
+    if method == "percentile":
+        # rank among the country set: 100 = best, ~0 = worst, 50 = median.
+        # handles negatives naturally and spreads scores evenly.
+        s = pd.Series(vals, dtype=float)
+        if polarity == "-":
+            s = -s
+        return (s.rank(pct=True) * 100.0).to_dict()
+
     # ratio_max (paper's method)
     if polarity == "-":
         # best = smallest; best scores 100, others = best/value * 100
@@ -66,7 +74,8 @@ def normalize_indicator(values: dict[str, float], polarity: str = "+",
 
 
 def compute_scores(df: pd.DataFrame,
-                   normalization: str = "within_year") -> pd.DataFrame:
+                   normalization: str = "within_year",
+                   method_override: str | None = None) -> pd.DataFrame:
     """Compute determinant-level competitiveness indices.
 
     Expected columns:
@@ -94,6 +103,8 @@ def compute_scores(df: pd.DataFrame,
         d["method"] = "ratio_max"
     d["polarity"] = d["polarity"].fillna("+")
     d["method"] = d["method"].fillna("ratio_max")
+    if method_override:                       # force one method for the whole run
+        d["method"] = method_override
 
     has_year = "year" in d.columns
 
