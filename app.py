@@ -55,9 +55,15 @@ def diamond_df(scores, determinants, factors, run_id, country, year, factor_name
     det = determinants[determinants.factor_id == fid][["id", "name"]]
     s = scores[(scores.run_id == run_id) & (scores.country_iso3 == country) &
                (scores.year == year)].merge(det, left_on="determinant_id", right_on="id")
+    if s.empty:
+        return None
     piv = s.pivot_table(index="name", columns="context", values="index").reindex(order)
-    piv = piv.rename(columns={"domestic": "dom", "international": "intl"}).fillna(0.0)
-    piv["intl_coord"] = piv["dom"] + piv.get("intl", 0.0)
+    piv = piv.rename(columns={"domestic": "dom", "international": "intl"})
+    for col in ("dom", "intl"):            # a context may be missing for sparse years
+        if col not in piv.columns:
+            piv[col] = 0.0
+    piv = piv.fillna(0.0)
+    piv["intl_coord"] = piv["dom"] + piv["intl"]
     return piv
 
 
@@ -94,8 +100,12 @@ with st.sidebar:
     run_label = st.selectbox("Methodology run", runs["label"])
     run_id = int(runs.loc[runs.label == run_label, "id"].iloc[0])
     rs = scores[scores.run_id == run_id]
+    # default to the most recent WELL-COVERED year (recent WDI years are sparse)
+    year_counts = rs.groupby("year").size()
+    well = year_counts[year_counts >= 0.5 * year_counts.max()].index
+    default_year = int(max(well)) if len(well) else int(rs["year"].max())
     years = sorted(rs["year"].unique())
-    year = st.selectbox("Year", years, index=len(years) - 1)
+    year = st.selectbox("Year", years, index=years.index(default_year))
     factor_name = st.radio("Diamond", ["physical", "human"], horizontal=True)
     countries = sorted(rs[rs.year == year]["country_iso3"].unique())
     c1 = st.selectbox("Country", countries, index=0)
@@ -104,13 +114,19 @@ with st.sidebar:
 col1, col2 = st.columns(2)
 with col1:
     piv1 = diamond_df(scores, determinants, factors, run_id, c1, year, factor_name)
-    st.plotly_chart(draw(piv1, f"{c1} — {year}"), use_container_width=True)
-    st.caption(f"Indicators feeding each corner — domestic vs. international. "
-               f"Vintage: {runs.loc[runs.id==run_id,'data_vintage'].iloc[0]}")
+    if piv1 is None:
+        st.info(f"No {factor_name} scores for {c1} in {year}. Try an earlier year.")
+    else:
+        st.plotly_chart(draw(piv1, f"{c1} — {year}"), use_container_width=True)
+        st.caption(f"Domestic vs. international, {factor_name} diamond. "
+                   f"Vintage: {runs.loc[runs.id==run_id,'data_vintage'].iloc[0]}")
 if c2 != "(none)":
     with col2:
         piv2 = diamond_df(scores, determinants, factors, run_id, c2, year, factor_name)
-        st.plotly_chart(draw(piv2, f"{c2} — {year}"), use_container_width=True)
+        if piv2 is None:
+            st.info(f"No {factor_name} scores for {c2} in {year}.")
+        else:
+            st.plotly_chart(draw(piv2, f"{c2} — {year}"), use_container_width=True)
 
 st.subheader("Scores")
 view = (scores[(scores.run_id == run_id) & (scores.year == year) &
