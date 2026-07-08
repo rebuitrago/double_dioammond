@@ -1,5 +1,7 @@
 # DDD Competitiveness Platform — Project Knowledge
 
+**PROJECT_KNOWLEDGE_VERSION = 2**  ·  last updated 2026-07-08  ·  see §15 for the correction log
+
 *A living reference for the Dual Double Diamond (DDD) competitiveness platform.
 Add this file to the Claude Project's knowledge base so every future
 conversation starts with the full picture.*
@@ -73,6 +75,8 @@ cannot replicate, so we target a credible open-data subset instead.)
 ---
 
 ## 4. Architecture & stack
+
+> ⚠️ **Correction (2026-07-08):** the repo name recorded in the table below is wrong. The real repository is `rebuitrago/double_dioammond` (the misspelling is literal, part of the actual name). See §15, Correction 1.
 
 All free-tier, chosen for a non-technical owner:
 
@@ -731,6 +735,8 @@ permanently 1-of-1 thin-flagged corner pooling percentiles over a biased
 
 ## 14. Criterion #60 — IP receipts (% service exports) — EXECUTED (run 9, 2026-07-07)
 
+> ⚠️ **Correction (2026-07-08):** `db/migration_03_ip_receipts.sql`, described in this section, does not exist on disk. Criterion #60 reached Supabase through the loader `ddd/load_imf_bop.py` run by the `.github/workflows/refresh.yml` GitHub Actions workflow, not a migration file. See §15, Correction 2.
+
 **Framework decision (owner):** Entrepreneurs international gains its
 second construct per roadmap item 7. Charges for the use of intellectual
 property, receipts, as % of total services exports. Placement rationale:
@@ -793,3 +799,65 @@ items #12 and International professional mobility (source decisions);
 EIU catalog export pending (Option C, Demand intl); Comtrade parked
 per §13; human-diamond app check for the Entrepreneurs 2025 corner
 (machinery verified, target corner not yet eyeballed).
+
+---
+
+## 15. Correction log — 2026-07-08
+
+Records where earlier entries drifted from reality, plus the git reconciliation
+finished today. Originals above are deliberately left in place; the drift itself
+is evidence (three separate drifts surfaced in one session).
+
+**Correction 1 — repo name (fixes §4).** §4 records the code host as
+`rebuitrago/ddd-platform`. That name does not exist. The real deployed
+repository is **`rebuitrago/double_dioammond`** (the `dioammond` misspelling is
+literal). Confirmed by reading the GitHub repository settings page this session,
+not from memory.
+
+**Correction 2 — migration_03 never existed on disk (fixes §14).** §14 describes
+`db/migration_03_ip_receipts.sql` as though written and run. A filename search
+and an `IP_RECEIPTS` token search across the project (excluding venv) found no
+such file; the token appears only inside `ddd/load_imf_bop.py`. Criterion #60's
+schema and data reached Supabase through that loader, executed by the
+`.github/workflows/refresh.yml` GitHub Actions workflow (which reads
+`SUPABASE_SECRET_KEY` from GitHub's encrypted secrets). Loader + Actions
+workflow is the real ingestion mechanism, and by extension the likely mechanism
+for earlier changes attributed to migration files.
+
+**Git reconciliation — DONE (was the top open risk in §14).** The working folder
+had never been a git repository. It is now under git and reconciled with the
+deployed remote:
+- Verified before touching git: no live Supabase secret key in any tracked file
+  (the `sb_secret_` hits in SETUP.md / RUNBOOK_wto.md / PROJECT_KNOWLEDGE.md were
+  documentation prefixes, not real keys); `.streamlit/secrets.toml` holds only
+  the publishable read key and is gitignored.
+- Hardened `.gitignore` (GITIGNORE_VERSION = 2) excludes `venv/`, `data/`
+  (licensed EIU + Euromonitor spreadsheets that must not reach a public repo),
+  `*.xlsx`, OS junk, backups, probe output.
+- Probe-first reconciliation: remote cloned to a throwaway folder and diffed file
+  by file. Local was a clean superset on every differing file (`app.py`
+  byte-identical both sides; `requirements.txt` local = remote + `pycountry`;
+  `connectors.py`, `ingest.py`, `load_imf_bop.py` all local-newer, proven by
+  version constants and working WGI routing). No remote-only work lost.
+- Validation gate `validation/korea_singapore_1998.py` passed 16/16 before push.
+- First commit `beb57a4`; pushed with `--force-with-lease`, replacing five
+  `Add files via upload` commits on the remote. Deploy verified: Streamlit logged
+  `Updated app!` and the Brazil 2025 human diamond re-rendered with honesty
+  markers intact.
+
+**Auth setup (so next session does not re-derive it).** No Homebrew on the
+machine. GitHub auth uses git's built-in macOS Keychain helper
+(`git config --global credential.helper osxkeychain`) with a classic Personal
+Access Token (scope `repo`), account `rebuitrago`. Future pushes need no
+re-auth. From a divergent local, the working push is
+`git push --force-with-lease origin main`; a plain push is rejected
+non-fast-forward because local and remote share no ancestor.
+
+**New open item — Streamlit deprecation fuse.** `app.py` uses
+`use_container_width=True`, which the deploy logs now warn is scheduled for
+removal. It works today. Before Streamlit removes it, replace every
+`use_container_width=True` with `width='stretch'` in `app.py`. Mechanical, not
+urgent, but dated.
+
+**Workflow note.** PROJECT_KNOWLEDGE.md is now git-tracked. After applying this
+correction, commit and push so GitHub stays in sync.
