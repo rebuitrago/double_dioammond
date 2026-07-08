@@ -1,0 +1,8 @@
+pandas>=2.0
+wbgapi>=1.0          # World Bank WDI/WGI connector
+requests>=2.31       # UNCTAD / data360 fetch
+supabase>=2.0        # observation upserts + app reads
+streamlit>=1.40      # the app
+plotly>=5.20         # diamond charts in the app
+matplotlib>=3.7      # validation plots only
+pycountry

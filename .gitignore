@@ -1,0 +1,16 @@
+# GITIGNORE_VERSION = 2  (DDD platform, hardened for public repo)
+__pycache__/
+*.pyc
+.env
+venv/
+.venv/
+.streamlit/secrets.toml
+.DS_Store
+.Rhistory
+*.csv
+!validation/korea_singapore_scores.csv
+*.xlsx
+*.XLSX
+app_backup.py
+probe_bop_results.txt
+data/

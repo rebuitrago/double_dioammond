@@ -1,0 +1,17 @@
+country,factor,context,determinant,index,n_indicators,n_sub_factors_present,n_sub_factors_expected,coverage_suppressed
+Korea,physical,domestic,Demand Conditions,100.0,2,,,False
+Korea,physical,domestic,Factor Conditions,100.0,2,,,False
+Korea,physical,domestic,"Firm Strategy, Structure & Rivalry",100.0,1,,,False
+Korea,physical,domestic,Related & Supporting Industries,100.0,2,,,False
+Korea,physical,international,Demand Conditions,54.723197259907934,2,,,False
+Korea,physical,international,Factor Conditions,4.292751643979153,2,,,False
+Korea,physical,international,"Firm Strategy, Structure & Rivalry",65.56442417331813,1,,,False
+Korea,physical,international,Related & Supporting Industries,37.39277082835365,2,,,False
+Singapore,physical,domestic,Demand Conditions,77.57973733583489,2,,,False
+Singapore,physical,domestic,Factor Conditions,74.94553376906318,2,,,False
+Singapore,physical,domestic,"Firm Strategy, Structure & Rivalry",85.1258581235698,1,,,False
+Singapore,physical,domestic,Related & Supporting Industries,92.89345388467846,2,,,False
+Singapore,physical,international,Demand Conditions,100.0,2,,,False
+Singapore,physical,international,Factor Conditions,100.0,2,,,False
+Singapore,physical,international,"Firm Strategy, Structure & Rivalry",100.0,1,,,False
+Singapore,physical,international,Related & Supporting Industries,100.0,2,,,False
